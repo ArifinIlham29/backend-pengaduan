@@ -56,8 +56,9 @@ module.exports = app;
 if (require.main === module) {
   initDb().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(Server is running on port  + PORT);
+      console.log('Server is running on port ' + PORT);
     });
   }).catch(console.error);
 }
+
 
