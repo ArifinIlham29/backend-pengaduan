@@ -18,14 +18,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Initialize DB for Serverless
-let dbInitialized = false;
-app.use(async (req, res, next) => {
-  if (!dbInitialized) {
-    try { await initDb(); dbInitialized = true; } catch(err) { console.error(err); }
-  }
-  next();
-});
+
 
 // Setup uploads folder as static path
 const uploadsPath = path.join(__dirname, 'uploads');
@@ -67,3 +60,4 @@ if (require.main === module) {
     });
   }).catch(console.error);
 }
+

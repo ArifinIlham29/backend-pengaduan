@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const dbConfig = { host: 'mysql-1f29f192-manham2204-fc17.b.aivencloud.com', port: 16844, user: 'avnadmin', password: 'AVNS_0qGSCDWP' + 'LucVE25W6Fm', database: 'defaultdb', ssl: { rejectUnauthorized: false } };
 
-let pool;
+const pool = mysql.createPool({ host: dbConfig.host, port: dbConfig.port, user: dbConfig.user, password: dbConfig.password, database: dbConfig.database, ssl: dbConfig.ssl, waitForConnections: true, connectionLimit: 10, queueLimit: 0 });
 
 async function initDb() {
   try {
@@ -211,6 +211,7 @@ module.exports = {
   db: dbWrapper,
   initDb
 };
+
 
 
 
