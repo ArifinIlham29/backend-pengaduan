@@ -137,7 +137,7 @@ router.post('/', authenticateToken, authorizeRole('mahasiswa'), upload.single('i
     // Check if category exists
     const category = await db.getAsync(`SELECT id FROM categories WHERE id = ?`, [category_id]);
     if (!category) {
-      if (imageFile) fs.unlinkSync(imageFile.path);
+      
       return res.status(400).json({ message: 'Kategori tidak valid.' });
     }
 
@@ -239,4 +239,5 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
+
 
