@@ -18,6 +18,15 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Initialize DB for Serverless
+let dbInitialized = false;
+app.use(async (req, res, next) => {
+  if (!dbInitialized) {
+    try { await initDb(); dbInitialized = true; } catch(err) { console.error(err); }
+  }
+  next();
+});
+
 // Setup uploads folder as static path
 const uploadsPath = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsPath)) {
@@ -48,20 +57,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialize database and start the server
-async function startServer() {
-  try {
-    console.log('Initializing database...');
-    await initDb();
-    console.log('Database initialized successfully.');
+// Export for Vercel
+module.exports = app;
 
+if (require.main === module) {
+  initDb().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+      console.log(Server is running on port  + PORT);
     });
-  } catch (error) {
-    console.error('Failed to initialize database or start server:', error);
-    process.exit(1);
-  }
+  }).catch(console.error);
 }
-
-startServer();
