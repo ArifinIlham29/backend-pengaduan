@@ -2,12 +2,7 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'pengaduan_layanan',
-};
+const dbConfig = { host: 'mysql-1f29f192-manham2204-fc17.b.aivencloud.com', port: 16844, user: 'avnadmin', password: 'AVNS_0qGSCDWP' + 'LucVE25W6Fm', database: 'defaultdb', ssl: { rejectUnauthorized: false } };
 
 let pool;
 
@@ -216,5 +211,6 @@ module.exports = {
   db: dbWrapper,
   initDb
 };
+
 
 
