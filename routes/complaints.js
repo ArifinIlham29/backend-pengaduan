@@ -29,6 +29,30 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+// GET /api/complaints/image/:id - Serve base64 image as binary
+router.get('/image/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const complaint = await db.getAsync('SELECT image_path FROM complaints WHERE id = ?', [id]);
+    if (!complaint || !complaint.image_path || !complaint.image_path.startsWith('data:image')) {
+      return res.status(404).send('Image not found');
+    }
+    const base64Data = complaint.image_path.replace(/^data:image\/\w+;base64,/, '');
+    const imgBuffer = Buffer.from(base64Data, 'base64');
+    let mime = 'image/jpeg';
+    if (complaint.image_path.startsWith('data:image/png')) mime = 'image/png';
+    else if (complaint.image_path.startsWith('data:image/webp')) mime = 'image/webp';
+    res.writeHead(200, {
+      'Content-Type': mime,
+      'Content-Length': imgBuffer.length,
+      'Cache-Control': 'public, max-age=31536000'
+    });
+    res.end(imgBuffer);
+  } catch (error) {
+    res.status(500).send('Error');
+  }
+});
+
 // GET /api/complaints - Fetch complaints (supports filtering and search)
 router.get('/', authenticateToken, async (req, res) => {
   const { status, category_id, search } = req.query;
@@ -78,7 +102,7 @@ router.get('/', authenticateToken, async (req, res) => {
     // Map image paths to full URLs if needed
     const complaintsWithUrls = complaints.map(c => ({
       ...c,
-      image_url: c.image_path
+      image_url: c.image_path ? /api/complaints/image/${c.id} : null
     }));
 
     return res.json(complaintsWithUrls);
@@ -113,7 +137,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Akses ditolak. Anda tidak berwenang melihat pengaduan ini.' });
     }
 
-    complaint.image_url = complaint.image_path ? `/uploads/${path.basename(complaint.image_path)}` : null;
+    complaint.image_url = complaint.image_path ? /api/complaints/image/${complaint.id} : null;
 
     return res.json(complaint);
   } catch (error) {
@@ -149,7 +173,7 @@ router.post('/', authenticateToken, authorizeRole('mahasiswa'), upload.single('i
     );
 
     const newComplaint = await db.getAsync(`SELECT * FROM complaints WHERE id = ?`, [result.lastID]);
-    newComplaint.image_url = imagePath;
+    newComplaint.image_url = imagePath ? /api/complaints/image/${newComplaint.id} : null;
 
     return res.status(201).json({
       message: 'Pengaduan berhasil dikirim.',
@@ -239,5 +263,6 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
+
 
 
