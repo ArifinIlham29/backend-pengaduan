@@ -102,7 +102,7 @@ router.get('/', authenticateToken, async (req, res) => {
     // Map image paths to full URLs if needed
     const complaintsWithUrls = complaints.map(c => ({
       ...c,
-      image_url: c.image_path ? /api/complaints/image/${c.id} : null
+      image_url: c.image_path ? '/api/complaints/image/' + c.id : null
     }));
 
     return res.json(complaintsWithUrls);
@@ -137,7 +137,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ message: 'Akses ditolak. Anda tidak berwenang melihat pengaduan ini.' });
     }
 
-    complaint.image_url = complaint.image_path ? /api/complaints/image/${complaint.id} : null;
+    complaint.image_url = complaint.image_path ? '/api/complaints/image/' + complaint.id : null;
 
     return res.json(complaint);
   } catch (error) {
@@ -173,7 +173,7 @@ router.post('/', authenticateToken, authorizeRole('mahasiswa'), upload.single('i
     );
 
     const newComplaint = await db.getAsync(`SELECT * FROM complaints WHERE id = ?`, [result.lastID]);
-    newComplaint.image_url = imagePath ? /api/complaints/image/${newComplaint.id} : null;
+    newComplaint.image_url = imagePath ? '/api/complaints/image/' + newComplaint.id : null;
 
     return res.status(201).json({
       message: 'Pengaduan berhasil dikirim.',
