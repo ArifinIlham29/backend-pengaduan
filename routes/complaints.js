@@ -12,15 +12,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -86,7 +78,7 @@ router.get('/', authenticateToken, async (req, res) => {
     // Map image paths to full URLs if needed
     const complaintsWithUrls = complaints.map(c => ({
       ...c,
-      image_url: c.image_path ? `/uploads/${path.basename(c.image_path)}` : null
+      image_url: c.image_path
     }));
 
     return res.json(complaintsWithUrls);
@@ -137,9 +129,7 @@ router.post('/', authenticateToken, authorizeRole('mahasiswa'), upload.single('i
 
   if (!category_id || !location || !description) {
     // Delete uploaded image if inputs are missing
-    if (imageFile) {
-      fs.unlinkSync(imageFile.path);
-    }
+    
     return res.status(400).json({ message: 'Kategori, lokasi, dan deskripsi wajib diisi.' });
   }
 
@@ -151,7 +141,7 @@ router.post('/', authenticateToken, authorizeRole('mahasiswa'), upload.single('i
       return res.status(400).json({ message: 'Kategori tidak valid.' });
     }
 
-    const imagePath = imageFile ? imageFile.path : null;
+    const imagePath = imageFile ? 'data:' + imageFile.mimetype + ';base64,' + imageFile.buffer.toString('base64') : null;
 
     const result = await db.runAsync(
       `INSERT INTO complaints (student_id, category_id, location, description, image_path, status) VALUES (?, ?, ?, ?, ?, 'Menunggu Verifikasi')`,
@@ -159,7 +149,7 @@ router.post('/', authenticateToken, authorizeRole('mahasiswa'), upload.single('i
     );
 
     const newComplaint = await db.getAsync(`SELECT * FROM complaints WHERE id = ?`, [result.lastID]);
-    newComplaint.image_url = imagePath ? `/uploads/${path.basename(imagePath)}` : null;
+    newComplaint.image_url = imagePath;
 
     return res.status(201).json({
       message: 'Pengaduan berhasil dikirim.',
@@ -249,3 +239,4 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
+
